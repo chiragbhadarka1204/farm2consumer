@@ -344,9 +344,32 @@ export function App() {
 
   // Admin operations
   const handleVerifyFarmer = async (farmerId: string, level: any) => {
-    const updated = await api.verifyFarmer(farmerId, level);
-    setFarmers((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
-    loadAllData();
+    try {
+      const updated = await api.verifyFarmer(farmerId, level);
+      setFarmers((prev) =>
+        prev.map((f) => (f.id === updated.id || f.userId === updated.userId || f.userId === farmerId || f.id === farmerId ? { ...f, ...updated } : f))
+      );
+      // Immediately update products list verification badge
+      setProducts((prev) =>
+        prev.map((p) => (p.farmerId === farmerId || p.farmerId === updated.userId || p.farmerId === updated.id ? { ...p, farmerVerification: level } : p))
+      );
+      await loadAllData();
+    } catch (err) {
+      console.error('Error verifying farmer:', err);
+    }
+  };
+
+  const handleSubmitFarmerKYC = async (kycData: Partial<FarmerProfile>) => {
+    if (!currentUser) return;
+    try {
+      const updated = await api.submitFarmerKYC(currentUser.id, kycData);
+      setFarmers((prev) =>
+        prev.map((f) => (f.userId === currentUser.id || f.id === currentUser.id ? { ...f, ...updated } : f))
+      );
+      await loadAllData();
+    } catch (err) {
+      console.error('Error submitting KYC:', err);
+    }
   };
 
   const handleResolveComplaint = async (
@@ -517,9 +540,9 @@ export function App() {
     }
   };
 
-  const currentFarmerProfile = farmers.find(
-    (f) => f.id === currentUser?.id || currentUser?.role === 'farmer'
-  );
+  const currentFarmerProfile =
+    farmers.find((f) => f.userId === currentUser?.id || f.id === currentUser?.id) ||
+    (currentUser?.role === 'farmer' ? farmers[0] : undefined);
 
   const activeBuyerOrders = orders.filter(
     (o) => o.buyerId === currentUser?.id || currentUser?.role === 'buyer'
@@ -601,6 +624,7 @@ export function App() {
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onOpenChat={handleOpenChat}
             onOpenPriceInsights={() => setIsPriceInsightsOpen(true)}
+            onSubmitKYC={handleSubmitFarmerKYC}
           />
         )}
 

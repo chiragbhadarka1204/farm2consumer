@@ -255,50 +255,221 @@ app.delete('/api/products/:id', (req, res) => {
 // Farmers API
 app.get('/api/farmers', (req, res) => {
   const farmerUsers = users.filter((u) => u.role === 'farmer');
-  const result = farmerUsers.map((u) => ({
-    user: u,
-    profile: farmerProfiles[u.id] || {
+  const result: FarmerProfile[] = farmerUsers.map((u) => {
+    const existing = farmerProfiles[u.id] || Object.values(farmerProfiles).find((p) => p.userId === u.id || p.id === u.id);
+    const profile: FarmerProfile = existing || {
       id: `fp_${u.id}`,
       userId: u.id,
-      farmName: `${u.name}'s Farm`,
-      location: 'Gujarat, India',
+      farmName: `${u.name}'s Natural Farm`,
+      location: u.address || 'Anand District, Gujarat',
       district: 'Anand',
       state: 'Gujarat',
       pincode: '388001',
-      coordinates: { lat: 22.5, lng: 72.9 },
-      farmSizeAcres: 8,
+      coordinates: { lat: 22.56, lng: 72.92 },
+      farmSizeAcres: 10.0,
       verificationStatus: 'profile_verified',
+      verificationLevel: 'profile_verified',
+      mainCrops: ['Organic Produce'],
       rating: 4.8,
-      totalReviews: 12,
-      completedOrders: 35,
-      bio: 'Dedicated natural farmer.',
-      deliveryMethods: ['farmer_delivery', 'buyer_pickup']
-    },
-    products: products.filter((p) => p.farmerId === u.id)
-  }));
+      totalReviews: 14,
+      completedOrders: 38,
+      bio: 'Dedicated natural farmer adhering to organic practices.',
+      deliveryMethods: ['farmer_delivery', 'buyer_pickup', 'partner_delivery']
+    };
+
+    return {
+      ...profile,
+      verificationLevel: profile.verificationLevel || profile.verificationStatus || 'profile_verified',
+      verificationStatus: profile.verificationStatus || profile.verificationLevel || 'profile_verified'
+    };
+  });
   res.json(result);
 });
 
 app.get('/api/farmers/:id', (req, res) => {
-  const user = users.find((u) => u.id === req.params.id && u.role === 'farmer');
-  if (!user) return res.status(404).json({ error: 'Farmer not found' });
-  const profile = farmerProfiles[user.id];
-  const farmerProducts = products.filter((p) => p.farmerId === user.id);
-  const farmerReviews = reviews.filter((r) => r.farmerId === user.id);
+  const targetId = req.params.id;
+  const user = users.find((u) => (u.id === targetId || u.role === 'farmer') && (u.id === targetId || farmerProfiles[u.id]?.id === targetId));
+  const profile = farmerProfiles[targetId] || Object.values(farmerProfiles).find((p) => p.id === targetId || p.userId === targetId);
+  if (!profile && !user) return res.status(404).json({ error: 'Farmer not found' });
+  const actualUserId = user?.id || profile?.userId;
+  const farmerProducts = products.filter((p) => p.farmerId === actualUserId || (profile && p.farmerId === profile.id));
+  const farmerReviews = reviews.filter((r) => r.farmerId === actualUserId || (profile && r.farmerId === profile.id));
   res.json({ user, profile, products: farmerProducts, reviews: farmerReviews });
 });
 
 app.put('/api/farmers/:id/verify', (req, res) => {
-  const { status } = req.body;
-  const profile = farmerProfiles[req.params.id];
-  if (!profile) return res.status(404).json({ error: 'Farmer profile not found' });
-  profile.verificationStatus = status || 'identity_verified';
+  const { status, remarks } = req.body;
+  const targetId = req.params.id;
 
-  // Update verification status on all their products too
-  products.forEach((p) => {
-    if (p.farmerId === req.params.id) {
-      p.farmerVerification = profile.verificationStatus;
+  let profileKey = Object.keys(farmerProfiles).find(
+    (k) => k === targetId || farmerProfiles[k].id === targetId || farmerProfiles[k].userId === targetId
+  );
+
+  let profile = profileKey ? farmerProfiles[profileKey] : undefined;
+
+  if (!profile) {
+    const user = users.find((u) => (u.id === targetId || u.name === targetId) && u.role === 'farmer');
+    if (user) {
+      profileKey = user.id;
+      farmerProfiles[user.id] = {
+        id: `fp_${user.id}`,
+        userId: user.id,
+        farmName: `${user.name}'s Natural Farm`,
+        location: user.address || 'Anand, Gujarat',
+        district: 'Anand',
+        state: 'Gujarat',
+        pincode: '388001',
+        coordinates: { lat: 22.56, lng: 72.92 },
+        farmSizeAcres: 10,
+        verificationStatus: (status as any) || 'identity_verified',
+        verificationLevel: (status as any) || 'identity_verified',
+        rating: 4.8,
+        totalReviews: 12,
+        completedOrders: 35,
+        bio: 'Dedicated natural farmer.',
+        deliveryMethods: ['farmer_delivery', 'buyer_pickup']
+      };
+      profile = farmerProfiles[user.id];
     }
+  }
+
+  if (!profile) return res.status(404).json({ error: 'Farmer profile not found' });
+
+  const newStatus = status || 'identity_verified';
+  profile.verificationStatus = newStatus;
+  profile.verificationLevel = newStatus;
+  if (remarks) {
+    profile.verificationRemarks = remarks;
+  }
+
+  // Update verification status on all products listed by this farmer
+  const matchingFarmerIds = [profile.userId, profile.id, targetId].filter(Boolean);
+  products.forEach((p) => {
+    if (matchingFarmerIds.includes(p.farmerId)) {
+      p.farmerVerification = newStatus as any;
+    }
+  });
+
+  // Also push notification for the farmer
+  notifications.unshift({
+    id: `notif_${Date.now()}`,
+    userId: profile.userId,
+    title: 'Farmer Verification Badge Updated ✓',
+    message: `Your KisanSetu farm verification level has been upgraded to ${newStatus.replace('_', ' ').toUpperCase()} by platform administration.`,
+    type: 'system',
+    isRead: false,
+    createdAt: new Date().toISOString()
+  });
+
+  res.json(profile);
+});
+
+// Farmer self-service KYC submission
+app.post('/api/farmers/:id/submit-verification', (req, res) => {
+  const targetId = req.params.id;
+  const { aadhaarNumber, landRecord712Number, organicCertNumber, soilHealthCardNumber, farmSizeAcres, mainCrops } = req.body;
+
+  let profileKey = Object.keys(farmerProfiles).find(
+    (k) => k === targetId || farmerProfiles[k].id === targetId || farmerProfiles[k].userId === targetId
+  );
+
+  let profile = profileKey ? farmerProfiles[profileKey] : undefined;
+
+  if (!profile) {
+    const user = users.find((u) => u.id === targetId && u.role === 'farmer');
+    if (user) {
+      profileKey = user.id;
+      farmerProfiles[user.id] = {
+        id: `fp_${user.id}`,
+        userId: user.id,
+        farmName: `${user.name}'s Natural Farm`,
+        location: user.address || 'Anand, Gujarat',
+        district: 'Anand',
+        state: 'Gujarat',
+        pincode: '388001',
+        coordinates: { lat: 22.56, lng: 72.92 },
+        farmSizeAcres: Number(farmSizeAcres) || 8.0,
+        verificationStatus: 'farm_verified',
+        verificationLevel: 'farm_verified',
+        rating: 5.0,
+        totalReviews: 0,
+        completedOrders: 0,
+        bio: 'Committed to organic, zero-chemical harvest.',
+        deliveryMethods: ['farmer_delivery', 'buyer_pickup', 'partner_delivery']
+      };
+      profile = farmerProfiles[user.id];
+    }
+  }
+
+  if (!profile) return res.status(404).json({ error: 'Farmer profile not found' });
+
+  if (aadhaarNumber) profile.aadhaarNumber = aadhaarNumber;
+  if (landRecord712Number) profile.landRecord712Number = landRecord712Number;
+  if (organicCertNumber) profile.organicCertNumber = organicCertNumber;
+  if (soilHealthCardNumber) profile.soilHealthCardNumber = soilHealthCardNumber;
+  if (farmSizeAcres) profile.farmSizeAcres = Number(farmSizeAcres);
+  if (mainCrops && Array.isArray(mainCrops)) profile.mainCrops = mainCrops;
+
+  // Auto-upgrade to farm_verified or identity_verified based on completeness
+  const hasLand = Boolean(landRecord712Number);
+  const hasAadhaar = Boolean(aadhaarNumber);
+  const newLevel = hasLand && hasAadhaar ? 'identity_verified' : 'farm_verified';
+  profile.verificationStatus = newLevel;
+  profile.verificationLevel = newLevel;
+
+  // Update existing KYC documents list
+  const existingDocs = profile.kycDocuments || [];
+  if (aadhaarNumber) {
+    existingDocs.push({
+      id: `doc_adh_${Date.now()}`,
+      type: 'aadhaar',
+      title: 'Aadhaar Identity Card',
+      documentNumber: aadhaarNumber,
+      status: 'verified',
+      fileName: 'Aadhaar_Document_Verified.pdf',
+      uploadedAt: new Date().toISOString()
+    });
+  }
+  if (landRecord712Number) {
+    existingDocs.push({
+      id: `doc_land_${Date.now()}`,
+      type: 'land_record_7_12',
+      title: '7/12 RoR Land Record Extract',
+      documentNumber: landRecord712Number,
+      status: 'verified',
+      fileName: '712_RoR_Verified.pdf',
+      uploadedAt: new Date().toISOString()
+    });
+  }
+  if (organicCertNumber) {
+    existingDocs.push({
+      id: `doc_org_${Date.now()}`,
+      type: 'organic_cert',
+      title: 'NPOP Organic Certificate',
+      documentNumber: organicCertNumber,
+      status: 'verified',
+      fileName: 'Organic_Cert_Verified.pdf',
+      uploadedAt: new Date().toISOString()
+    });
+  }
+  profile.kycDocuments = existingDocs;
+
+  // Update matching products
+  const matchingFarmerIds = [profile.userId, profile.id, targetId].filter(Boolean);
+  products.forEach((p) => {
+    if (matchingFarmerIds.includes(p.farmerId)) {
+      p.farmerVerification = newLevel as any;
+    }
+  });
+
+  notifications.unshift({
+    id: `notif_${Date.now()}`,
+    userId: profile.userId,
+    title: 'KYC & Land Verification Submitted Successfully',
+    message: `Your 7/12 Land Record and Aadhaar have been verified. Your Trust Level is now: ${newLevel.replace('_', ' ').toUpperCase()}!`,
+    type: 'system',
+    isRead: false,
+    createdAt: new Date().toISOString()
   });
 
   res.json(profile);

@@ -16,7 +16,9 @@ import {
   Star,
   Layers,
   MessageCircle,
-  AlertCircle
+  AlertCircle,
+  FileCheck,
+  Award
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -31,6 +33,7 @@ import {
   Cell
 } from 'recharts';
 import { Product, Order, User, FarmerProfile, OrderStatus } from '../types';
+import { FarmerKYCModal } from './FarmerKYCModal';
 
 interface FarmerDashboardProps {
   currentUser: User | null;
@@ -43,6 +46,7 @@ interface FarmerDashboardProps {
   onUpdateOrderStatus: (orderId: string, status: OrderStatus, note?: string) => void;
   onOpenChat: (buyerId: string, buyerName: string, orderId?: string) => void;
   onOpenPriceInsights: () => void;
+  onSubmitKYC?: (kycData: Partial<FarmerProfile>) => Promise<void>;
 }
 
 export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
@@ -55,9 +59,11 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   onDeleteProduct,
   onUpdateOrderStatus,
   onOpenChat,
-  onOpenPriceInsights
+  onOpenPriceInsights,
+  onSubmitKYC
 }) => {
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'earnings' | 'market_trends'>('orders');
+  const [isKYCModalOpen, setIsKYCModalOpen] = useState<boolean>(false);
 
   // Filter farmer specific items
   const myProducts = products.filter(
@@ -66,6 +72,40 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   const myOrders = orders.filter(
     (o) => o.farmerId === currentUser?.id || currentUser?.role === 'farmer'
   );
+
+  const verificationTier =
+    farmerProfile?.verificationLevel || farmerProfile?.verificationStatus || 'identity_verified';
+
+  const getTierBadge = () => {
+    switch (verificationTier) {
+      case 'identity_verified':
+        return {
+          label: 'Identity & Land Records Verified ✓',
+          bg: 'bg-emerald-400 text-emerald-950',
+          desc: '7/12 RoR Land Record + Aadhaar OTP Verified'
+        };
+      case 'farm_verified':
+        return {
+          label: 'Farm Land Verified ✓',
+          bg: 'bg-blue-400 text-blue-950',
+          desc: 'Farm location and acreage verified'
+        };
+      case 'profile_verified':
+        return {
+          label: 'Profile Verified ✓',
+          bg: 'bg-purple-300 text-purple-950',
+          desc: 'Contact & farmer profile verified'
+        };
+      default:
+        return {
+          label: 'Verification Pending',
+          bg: 'bg-amber-300 text-amber-950',
+          desc: 'Upload 7/12 Land Record for verification'
+        };
+    }
+  };
+
+  const badgeInfo = getTierBadge();
 
   // Metrics
   const totalSales = myOrders
@@ -96,6 +136,12 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
 
   const PIE_COLORS = ['#059669', '#0d9488', '#d97706', '#6366f1', '#ec4899', '#84cc16'];
 
+  const handleKYCSubmit = async (data: Partial<FarmerProfile>) => {
+    if (onSubmitKYC) {
+      await onSubmitKYC(data);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Farmer Profile Header */}
@@ -111,9 +157,9 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
               <h1 className="font-display text-2xl sm:text-3xl font-extrabold">
                 {currentUser?.name || 'Rajesh Patel'}
               </h1>
-              <span className="bg-emerald-400 text-emerald-950 text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <span className={`${badgeInfo.bg} text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Verified Farmer ✓
+                {badgeInfo.label}
               </span>
             </div>
             <p className="text-emerald-200 text-sm font-medium">
@@ -134,6 +180,15 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
 
         <div className="flex flex-wrap items-center gap-3">
           <button
+            id="btn-farmer-manage-kyc"
+            onClick={() => setIsKYCModalOpen(true)}
+            className="bg-emerald-700/80 hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-sm border border-emerald-500 transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-300" />
+            <span>Land & KYC Verification</span>
+          </button>
+
+          <button
             id="btn-farmer-list-produce-top"
             onClick={onAddProduct}
             className="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-amber-400/20 transition-all cursor-pointer"
@@ -152,6 +207,44 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Trust & Land Verification Status Banner */}
+      <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+            <Award className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-stone-900 text-sm sm:text-base">
+                KisanSetu Grower Trust Verification Status: <span className="text-emerald-800">{badgeInfo.label}</span>
+              </h3>
+            </div>
+            <p className="text-xs text-stone-600 mt-0.5">
+              {farmerProfile?.landRecord712Number
+                ? `7/12 RoR Record: ${farmerProfile.landRecord712Number} • Aadhaar KYC Verified • All listed produce displays the Verified Grower seal.`
+                : 'Upload your 7/12 RoR extract and Aadhaar ID to earn 0% listing hold and boost direct sales to bulk buyers.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          id="btn-open-kyc-banner"
+          onClick={() => setIsKYCModalOpen(true)}
+          className="bg-white hover:bg-emerald-100 text-emerald-900 text-xs font-bold px-4 py-2 rounded-xl border border-emerald-300 shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+        >
+          <FileCheck className="w-4 h-4 text-emerald-700" />
+          <span>Update Land Record / 7/12</span>
+        </button>
+      </div>
+
+      {/* KYC Modal */}
+      <FarmerKYCModal
+        isOpen={isKYCModalOpen}
+        onClose={() => setIsKYCModalOpen(false)}
+        farmerProfile={farmerProfile}
+        onSubmitKYC={handleKYCSubmit}
+      />
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

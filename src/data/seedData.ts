@@ -91,12 +91,23 @@ export const initialFarmerProfiles: Record<string, FarmerProfile> = {
     coordinates: { lat: 22.5645, lng: 72.9289 },
     farmSizeAcres: 12.5,
     verificationStatus: 'identity_verified',
+    verificationLevel: 'identity_verified',
+    mainCrops: ['Tomatoes', 'Potatoes', 'Okra', 'Organic Wheat'],
     rating: 4.8,
     totalReviews: 48,
     completedOrders: 142,
     bio: 'Pioneering organic vegetable and fruit farming in Charotar belt using natural drip irrigation, neem bio-pest control, and vermicompost.',
     deliveryMethods: ['farmer_delivery', 'buyer_pickup', 'partner_delivery'],
-    upiId: 'rajesh.patel@okhdfcbank'
+    upiId: 'rajesh.patel@okhdfcbank',
+    aadhaarNumber: 'XXXX-XXXX-8921',
+    landRecord712Number: '712-GUJ-ANAND-889',
+    organicCertNumber: 'NPOP/NAB/0018-ORG',
+    soilHealthCardNumber: 'SHC-GUJ-2024-88219',
+    kycDocuments: [
+      { id: 'doc_1', type: 'aadhaar', title: 'Aadhaar Identity Card', documentNumber: 'XXXX-XXXX-8921', status: 'verified', fileName: 'Aadhaar_Verified_OTP.pdf', uploadedAt: '2024-01-16T10:00:00Z' },
+      { id: 'doc_2', type: 'land_record_7_12', title: '7/12 RoR Land Record Extract', documentNumber: 'Survey No. 402/1 Boriavi', status: 'verified', fileName: '712_Boriavi_Anand.pdf', uploadedAt: '2024-01-16T10:05:00Z' },
+      { id: 'doc_3', type: 'organic_cert', title: 'NPOP Certified Organic Certificate', documentNumber: 'NPOP/NAB/0018-ORG', status: 'verified', fileName: 'Organic_NPOP_2024.pdf', uploadedAt: '2024-01-17T11:00:00Z' }
+    ]
   },
   usr_farmer_2: {
     id: 'fp_2',
@@ -109,12 +120,21 @@ export const initialFarmerProfiles: Record<string, FarmerProfile> = {
     coordinates: { lat: 22.0315, lng: 71.2056 },
     farmSizeAcres: 25.0,
     verificationStatus: 'farm_verified',
+    verificationLevel: 'farm_verified',
+    mainCrops: ['Sharbati Wheat', 'Groundnut', 'Cotton'],
     rating: 4.7,
     totalReviews: 32,
     completedOrders: 89,
     bio: 'Specialist in Tukdi and Sharbati whole wheat grains and high-yield groundnut crops with certified moisture testing.',
     deliveryMethods: ['farmer_delivery', 'partner_delivery'],
-    upiId: 'mahesh.solanki@okaxis'
+    upiId: 'mahesh.solanki@okaxis',
+    aadhaarNumber: 'XXXX-XXXX-4412',
+    landRecord712Number: '712-GUJ-RJK-140',
+    soilHealthCardNumber: 'SHC-GUJ-2024-11092',
+    kycDocuments: [
+      { id: 'doc_4', type: 'aadhaar', title: 'Aadhaar Identity Card', documentNumber: 'XXXX-XXXX-4412', status: 'verified', fileName: 'Aadhaar_Mahesh.pdf', uploadedAt: '2024-01-21T09:00:00Z' },
+      { id: 'doc_5', type: 'land_record_7_12', title: '7/12 Land Record Extract', documentNumber: 'Survey No. 112/3 Jasdan', status: 'pending', fileName: '712_Jasdan_Survey.pdf', uploadedAt: '2024-01-21T09:30:00Z' }
+    ]
   },
   usr_farmer_3: {
     id: 'fp_3',
@@ -127,12 +147,20 @@ export const initialFarmerProfiles: Record<string, FarmerProfile> = {
     coordinates: { lat: 22.5921, lng: 73.0112 },
     farmSizeAcres: 8.0,
     verificationStatus: 'identity_verified',
+    verificationLevel: 'identity_verified',
+    mainCrops: ['Grand Naine Banana', 'Papaya', 'Guava'],
     rating: 4.9,
     totalReviews: 29,
     completedOrders: 76,
     bio: 'Grand Naine Cavendish bananas naturally ripened without carbide. Fresh papayas and organic seasonal citrus fruits.',
     deliveryMethods: ['farmer_delivery', 'buyer_pickup'],
-    upiId: 'kiran.charotar@oksbi'
+    upiId: 'kiran.charotar@oksbi',
+    aadhaarNumber: 'XXXX-XXXX-9901',
+    landRecord712Number: '712-GUJ-ANAND-332',
+    kycDocuments: [
+      { id: 'doc_6', type: 'aadhaar', title: 'Aadhaar Identity Card', documentNumber: 'XXXX-XXXX-9901', status: 'verified', fileName: 'Aadhaar_Kiran.pdf', uploadedAt: '2024-02-02T14:00:00Z' },
+      { id: 'doc_7', type: 'land_record_7_12', title: '7/12 Land Record Extract', documentNumber: 'Survey No. 89/1 Samarkha', status: 'verified', fileName: 'Samarkha_712.pdf', uploadedAt: '2024-02-02T14:15:00Z' }
+    ]
   },
   usr_farmer_4: {
     id: 'fp_4',
@@ -145,12 +173,21 @@ export const initialFarmerProfiles: Record<string, FarmerProfile> = {
     coordinates: { lat: 21.5222, lng: 70.4579 },
     farmSizeAcres: 18.0,
     verificationStatus: 'identity_verified',
+    verificationLevel: 'identity_verified',
+    mainCrops: ['Gir Cow A2 Milk', 'Bilona Ghee', 'Cumin', 'Coriander'],
     rating: 4.95,
     totalReviews: 64,
     completedOrders: 210,
     bio: 'Pure Gir cow A2 raw milk, bilona ghee, along with organic cumin and coriander seeds harvested from Kathiawar soil.',
     deliveryMethods: ['farmer_delivery', 'partner_delivery'],
-    upiId: 'ramesh.amrut@okicici'
+    upiId: 'ramesh.amrut@okicici',
+    aadhaarNumber: 'XXXX-XXXX-2198',
+    landRecord712Number: '712-GUJ-JND-501',
+    organicCertNumber: 'NPOP/NAB/0091-ORG',
+    kycDocuments: [
+      { id: 'doc_8', type: 'aadhaar', title: 'Aadhaar Card', documentNumber: 'XXXX-XXXX-2198', status: 'verified', fileName: 'Aadhaar_Ramesh.pdf', uploadedAt: '2024-02-11T12:00:00Z' },
+      { id: 'doc_9', type: 'land_record_7_12', title: '7/12 Land Records Extract', documentNumber: 'Survey No. 201 Junagadh', status: 'verified', fileName: 'Gir_Land_712.pdf', uploadedAt: '2024-02-11T12:20:00Z' }
+    ]
   }
 };
 

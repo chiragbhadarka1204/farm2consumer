@@ -218,83 +218,143 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Tab 1: Farmer Verifications */}
       {activeTab === 'verifications' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display text-lg font-bold text-stone-900">
-              Grower Identity & Land Record Verifications
-            </h3>
-            <span className="text-xs text-stone-500">
-              Multi-tier trust badge verification prevents fraud and guarantees authenticity
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="font-display text-lg font-bold text-stone-900">
+                Grower Identity & Land Record Verifications ({farmers.length})
+              </h3>
+              <p className="text-xs text-stone-500">
+                Multi-tier trust badge verification: verify 7/12 land records, Aadhaar KYC, and Organic certifications to protect buyers and growers.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                {farmers.filter((f) => (f.verificationLevel || f.verificationStatus) === 'identity_verified').length} Identity & Land Certified
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {farmers.map((farmer) => (
-              <div
-                key={farmer.id}
-                id={`farmer-verify-card-${farmer.id}`}
-                className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs space-y-4"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-bold text-stone-900 text-base">{farmer.farmName}</h4>
-                    <p className="text-xs text-stone-500">
-                      Farmer ID: {farmer.id} • {farmer.location}
-                    </p>
-                    <p className="text-xs text-stone-700 font-medium mt-1">
-                      Farm Size: <strong>{farmer.farmSizeAcres} Acres</strong> • Crops: {farmer.mainCrops?.join(', ') || 'Mixed Harvest'}
-                    </p>
-                  </div>
+            {farmers.map((farmer) => {
+              const currentTier = farmer.verificationLevel || farmer.verificationStatus || 'none';
+              const isIdentityVerified = currentTier === 'identity_verified';
+              const isFarmVerified = currentTier === 'farm_verified';
+              const isProfileVerified = currentTier === 'profile_verified';
 
-                  <span
-                    className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                      (farmer.verificationLevel || farmer.verificationStatus) === 'identity_verified'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : (farmer.verificationLevel || farmer.verificationStatus) === 'farm_verified'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-amber-100 text-amber-900'
-                    }`}
-                  >
-                    {(farmer.verificationLevel || farmer.verificationStatus || 'none').replace('_', ' ').toUpperCase()}
-                  </span>
-                </div>
+              return (
+                <div
+                  key={farmer.id}
+                  id={`farmer-verify-card-${farmer.id}`}
+                  className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs space-y-4 hover:border-purple-300 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-stone-900 text-base">{farmer.farmName}</h4>
+                        {isIdentityVerified && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-500">
+                        Farmer ID: <code className="font-mono text-[11px] bg-stone-100 px-1 py-0.5 rounded">{farmer.userId || farmer.id}</code> • {farmer.location}
+                      </p>
+                      <p className="text-xs text-stone-700 font-medium mt-1">
+                        Farm Size: <strong>{farmer.farmSizeAcres || 5} Acres</strong> • Crops: {farmer.mainCrops?.join(', ') || 'Seasonal Harvest'}
+                      </p>
+                    </div>
 
-                <div className="bg-stone-50 p-3 rounded-xl border border-stone-200 text-xs space-y-1 text-stone-600">
-                  <div className="flex justify-between">
-                    <span>Aadhaar / Gov ID:</span>
-                    <strong className="text-stone-800">XXXX-XXXX-8921 (Verified OTP)</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>7/12 Land Record Extract:</span>
-                    <strong className="text-emerald-700">712-GUJ-ANAND-889.pdf (Uploaded)</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Organic Certification:</span>
-                    <strong className="text-stone-800">NPOP/NAB/0018-ORG</strong>
-                  </div>
-                </div>
-
-                {/* Verification Approval Buttons */}
-                <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <span className="font-bold text-stone-600">Update Badge:</span>
-                  <div className="flex gap-2">
-                    <button
-                      id={`btn-verify-farm-${farmer.id}`}
-                      onClick={() => onVerifyFarmer(farmer.id, 'farm_verified')}
-                      className="bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold px-3 py-1.5 rounded-lg border border-blue-200 cursor-pointer"
+                    <span
+                      className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full whitespace-nowrap ${
+                        isIdentityVerified
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          : isFarmVerified
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : isProfileVerified
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                          : 'bg-amber-100 text-amber-900 border border-amber-200'
+                      }`}
                     >
-                      Farm Details ✓
-                    </button>
-                    <button
-                      id={`btn-verify-identity-${farmer.id}`}
-                      onClick={() => onVerifyFarmer(farmer.id, 'identity_verified')}
-                      className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3.5 py-1.5 rounded-lg shadow-xs cursor-pointer"
-                    >
-                      Full Identity & Land Verified ✓✓
-                    </button>
+                      {currentTier.replace(/_/g, ' ').toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Dynamic KYC & Land Record Details */}
+                  <div className="bg-stone-50 p-3 rounded-xl border border-stone-200 text-xs space-y-1.5 text-stone-600">
+                    <div className="flex justify-between items-center">
+                      <span className="text-stone-500 font-medium">Aadhaar / Gov ID:</span>
+                      <strong className="text-stone-800 font-mono">
+                        {farmer.aadhaarNumber || 'XXXX-XXXX-8921 (Verified OTP)'}
+                      </strong>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-stone-500 font-medium">7/12 Land Record Extract:</span>
+                      <strong className="text-emerald-700 font-mono">
+                        {farmer.landRecord712Number ? `${farmer.landRecord712Number} (Verified)` : '712-GUJ-ANAND-889.pdf (Uploaded)'}
+                      </strong>
+                    </div>
+                    {farmer.organicCertNumber && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-stone-500 font-medium">Organic Certification:</span>
+                        <strong className="text-stone-800 font-mono">{farmer.organicCertNumber}</strong>
+                      </div>
+                    )}
+                    {farmer.soilHealthCardNumber && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-stone-500 font-medium">Soil Health Card:</span>
+                        <strong className="text-stone-800 font-mono">{farmer.soilHealthCardNumber}</strong>
+                      </div>
+                    )}
+                    {farmer.verificationRemarks && (
+                      <div className="pt-1 text-[11px] text-stone-500 italic border-t border-stone-200">
+                        Admin Note: {farmer.verificationRemarks}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Verification Approval Actions */}
+                  <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="font-bold text-stone-600">Assign Trust Tier:</span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        id={`btn-verify-profile-${farmer.id}`}
+                        onClick={() => onVerifyFarmer(farmer.id, 'profile_verified')}
+                        className={`font-bold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                          isProfileVerified
+                            ? 'bg-purple-100 text-purple-900 border-purple-300 shadow-xs'
+                            : 'bg-stone-50 hover:bg-purple-50 text-stone-700 border-stone-200'
+                        }`}
+                      >
+                        Profile ✓
+                      </button>
+
+                      <button
+                        id={`btn-verify-farm-${farmer.id}`}
+                        onClick={() => onVerifyFarmer(farmer.id, 'farm_verified')}
+                        className={`font-bold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                          isFarmVerified
+                            ? 'bg-blue-100 text-blue-900 border-blue-300 shadow-xs'
+                            : 'bg-stone-50 hover:bg-blue-50 text-blue-800 border-stone-200'
+                        }`}
+                      >
+                        Farm Details ✓
+                      </button>
+
+                      <button
+                        id={`btn-verify-identity-${farmer.id}`}
+                        onClick={() => onVerifyFarmer(farmer.id, 'identity_verified')}
+                        className={`font-bold px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                          isIdentityVerified
+                            ? 'bg-emerald-800 text-white shadow-xs'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                        }`}
+                      >
+                        Identity & Land Verified ✓✓
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

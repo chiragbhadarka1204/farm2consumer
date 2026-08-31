@@ -13,6 +13,16 @@ export interface User {
 
 export type VerificationLevel = 'none' | 'profile_verified' | 'farm_verified' | 'identity_verified';
 
+export interface FarmerKYCDocument {
+  id: string;
+  type: 'aadhaar' | 'land_record_7_12' | 'organic_cert' | 'soil_health_card' | 'bank_passbook';
+  title: string;
+  documentNumber: string;
+  status: 'pending' | 'verified' | 'rejected';
+  fileName?: string;
+  uploadedAt: string;
+}
+
 export interface FarmerProfile {
   id: string;
   userId: string;
@@ -32,6 +42,12 @@ export interface FarmerProfile {
   bio: string;
   deliveryMethods: ('farmer_delivery' | 'buyer_pickup' | 'partner_delivery')[];
   upiId?: string;
+  aadhaarNumber?: string;
+  landRecord712Number?: string;
+  organicCertNumber?: string;
+  soilHealthCardNumber?: string;
+  kycDocuments?: FarmerKYCDocument[];
+  verificationRemarks?: string;
 }
 
 export interface BuyerProfile {
