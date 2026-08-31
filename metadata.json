@@ -1,0 +1,6 @@
+{
+  "name": "KisanSetu - Farmer Direct Marketplace",
+  "description": "Smart India Hackathon Farmer-to-Buyer direct marketplace connecting farmers directly with consumers, retailers, and bulk buyers with price transparency and location matching.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
